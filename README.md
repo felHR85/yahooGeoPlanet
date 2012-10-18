@@ -9,11 +9,11 @@ If you want more about the structure of the JSON returned by yahoo api check: ht
 There are four classes:
 - yahooGeoPlanet: It is the main class and therefore contains the main methods. Must to be always instantiate.
 	methods: 
-			- def getPlaceByWoeid(self,woeid) : Returns a place object specified by WOEID.
-			- def getWoeidByPlace(self,query): Returns a list of place object specified which match with the query.
-			- def getRangeOfWoeid(self,query,count): Returns a list of place objects of length equals the value of count. Ordered by the most likely.
- 			- def getParentWoeid(self,woeid): Returns a place object which contains the parent of a given WOEID.
- 			- getLang/setLang : A getter/setter to get/set the language of the requests. English default
+			<blockquote> def getPlaceByWoeid(self,woeid)</blockquote>  Returns a place object specified by WOEID.
+			<blockquote> def getWoeidByPlace(self,query)</blockquote>  Returns a list of place object specified which match with the query.
+			<blockquote> def getRangeOfWoeid(self,query,count)</blockquote>  Returns a list of place objects of length equals the value of count. Ordered by the most likely.
+ 			<blockquote> def getParentWoeid(self,woeid)</blockquote>  Returns a place object which contains the parent of a given WOEID.
+ 			<blockquote> getLang/setLang</blockquote>   A getter/setter to get/set the language of the requests. English default
 
 - Place: It is a simple deserialization of the place object given by the api to a Python object. This object provides a collection of getters/setters to get WOEID,Country, administration...
 - Attributes: Generally contains information of the administration.
