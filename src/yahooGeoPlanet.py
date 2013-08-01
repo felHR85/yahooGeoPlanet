@@ -24,25 +24,24 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import httplib
+import http.client as httplib
 import urllib
 import json
 
-class yahooGeoPlanet(object):
+class GeoPlanet(object):
 	""" Main class. A yahoo Id is needed"""
 
 	def __init__(self,yahooId):
 
-		self.__yahooId = yahooId
+		self.__yahooId = str(yahooId)
 		self.__uri = 'where.yahooapis.com'
 		self.__connection = httplib.HTTPConnection(self.__uri)
 		self.__lang = "en"
 
-	def getPlaceByWoeid(self,woeid):
+	def get_place_by_woeid(self,woeid):
 
 		""" Returns a place object specified by WOEID. """
-
-		params = "/v1/place/" + str(woeid) + "?lang=" + str(self.__lang) +"&format=json&appid=" + str(self.__yahooId)
+		params = "/v1/place/" + str(woeid) + "?lang=" + self.__lang +"&format=json&appid=" + self.__yahooId
 		self.__connection.request("GET",params)
 		httpResponse = self.__connection.getresponse()
 
@@ -51,7 +50,7 @@ class yahooGeoPlanet(object):
 				errorCode = httpResponse.status
 				typeError = "Http Connection failed: " + str(errorCode)
 				raise yahooGeoError(typeError)
-		except yahooGeoError, error:
+		except yahooGeoError as error:
 			return error
 
 		data = httpResponse.read()
@@ -61,13 +60,12 @@ class yahooGeoPlanet(object):
 		return placeObject
 
 
-	def getWoeidByPlace(self,query):
+	def get_woeid_by_place(self,query):
 
 		""" Returns a list of place object specified which match with the query. """
 
-		query = unicode(query).encode('utf-8')
-		query = urllib.quote(query)
-		params = "/v1/places.q('" + str(query) +"')" + "?lang=" + str(self.__lang) +"&format=json&appid=" + str(self.__yahooId)
+		query = urllib.parse.quote(query)
+		params = "/v1/places.q('" + query +"')" + "?lang=" + self.__lang +"&format=json&appid=" + self.__yahooId
 		self.__connection.request("GET",params)
 		httpResponse = self.__connection.getresponse()
 
@@ -76,7 +74,7 @@ class yahooGeoPlanet(object):
 				errorCode = httpResponse.status
 				typeError = "Http Connection failed: " + str(errorCode)
 				raise yahooGeoError(typeError)
-		except yahooGeoError, error:
+		except yahooGeoError as error:
 			return error 
 
 		data = httpResponse.read()
@@ -86,7 +84,7 @@ class yahooGeoPlanet(object):
 			if data["places"].get("total") == 0:
 				messageError = "This query has not results"
 				raise yahooGeoError(messageError)
-		except yahooGeoError, error:
+		except yahooGeoError as error:
 			return error
 
 		placeJson = data["places"].get("place")
@@ -98,13 +96,11 @@ class yahooGeoPlanet(object):
 
 		return placeList
 
-	def getRangeOfWoeid(self,query,count):
+	def get_range_of_woeid(self,query,count):
 
 		""" Returns a list of place objects of length equals the value of count. Ordered by the most likely. """
-
-		query = unicode(query).encode('utf-8')
-		query = urllib.quote(query)
-		params = "/v1/places.q('" + str(query) + "');start=0;count=" + str(count) + "?lang=" + str(self.__lang) +"&format=json&appid=" + str(self.__yahooId)
+		query = urllib.parse.quote(query)
+		params = "/v1/places.q('" + query + "');start=0;count=" + str(count) + "?lang=" + self.__lang +"&format=json&appid=" + self.__yahooId
 		self.__connection.request("GET",params)
 		httpResponse = self.__connection.getresponse()
 
@@ -113,7 +109,7 @@ class yahooGeoPlanet(object):
 				errorCode = httpResponse.status
 				typeError = "Http Connection failed: " + str(errorCode)
 				raise yahooGeoError(typeError)
-		except yahooGeoError, error:
+		except yahooGeoError as error:
 			return error 
 
 		data = httpResponse.read()
@@ -124,7 +120,7 @@ class yahooGeoPlanet(object):
 			if data["places"].get("total") == 0:
 				messageError = "This query has not results"
 				raise yahooGeoError(messageError)
-		except yahooGeoError, error:
+		except yahooGeoError as error:
 			return error
 
 		placeJson = data["places"].get("place")
@@ -137,12 +133,11 @@ class yahooGeoPlanet(object):
 
 		return placeList
 
-	def getParentWoeid(self,woeid):
+	def get_parent_woeid(self,woeid):
 
 		""" Returns a place object which contains the parent of a given WOEID. """
 
-
-		params = "/v1/place/" + str(woeid) + "/parent?lang=" +  str(self.__lang) + "&format=json&select=long&appid=" + str(self.__yahooId)
+		params = "/v1/place/" + str(woeid) + "/parent?lang=" +  self.__lang + "&format=json&select=long&appid=" + self.__yahooId
 		self.__connection.request("GET",params)
 		httpResponse = self.__connection.getresponse()
 
@@ -151,7 +146,7 @@ class yahooGeoPlanet(object):
 				errorCode = httpResponse.status
 				typeError = "Http Connection failed: " + str(errorCode)
 				raise yahooGeoError(typeError)
-		except yahooGeoError, error:
+		except yahooGeoError as error:
 			return error 
 
 		data = httpResponse.read()
@@ -179,18 +174,18 @@ class yahooGeoPlanet(object):
 	# 	data = httpResponse.read()
 	# 	data = json.loads(data)
 
-	def setLang(self,lang):
+	def set_lang(self,lang):
 
 		self.__lang = lang
 
-	def getLang(self):
+	def get_lang(self):
 
 		return self.__lang
 
 
 
 
-	def __readJson(self,placeJson): # A private method with all json operations
+	def __read_json(self,placeJson): # A private method with all json operations
 
 		placeObject = place()
 		placeObject.setWoeid(placeJson["woeid"])
@@ -228,7 +223,7 @@ class yahooGeoPlanet(object):
 
 
 
-class place(object):
+class Place(object):
 
 	""" A representation of the information given by the JSON. It is practically the same information of the JSON """
 	""" There are a lot of getters/setters for each value you may neeed. An example of JSON object is included in folder test """
@@ -409,9 +404,9 @@ class place(object):
 
 		return self.__lang
 
-class attributes(object):
+class Attributes(object):
 
-	""" In the yahooGeoPlanet model of data, administrations, countries and localities have some attributes like type and code. This class contain them """
+	""" In the yahooGeoPlanet model of data, administrations, countries and localities have some attributes like type and code. This class contains them """
 
 	def __init__(self,Type,code):
 
@@ -426,7 +421,7 @@ class attributes(object):
 
 		return self.__code
 
-class coordinates(object):
+class Coordinates(object):
 
 	""" A class which contains latitude and longitude """
 
@@ -436,19 +431,19 @@ class coordinates(object):
 		self.__latitude = latitude
 		self.__longitude = longitude
 
-	def getName(self):
+	def get_name(self):
 
 		return self.__name
 
-	def getLatitude(self):
+	def get_latitude(self):
 
 		return self.__latitude
 
-	def getLongitude(self):
+	def get_longitude(self):
 
 		return self.__longitude
 
-class yahooGeoError(Exception):
+class GeoError(Exception):
 
 	"""  If something went wrong, main methods return a yahooGeoError object with information of the error. """
 
@@ -456,13 +451,15 @@ class yahooGeoError(Exception):
 
 		self.__typeError = typeError
 
-	def getTypeError(self):
+	def get_type_error(self):
 
 		return self.__typeError
 
-
-
-
+"""
+Unicode functions
+"""
+str_to_utf8 = lambda s: s.encode('utf-8')
+utf8_to_str = lambda s: str(s,'utf-8')
 
 
 
