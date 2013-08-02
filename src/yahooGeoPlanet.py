@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012 Felipe Herranz
+Copyright (c) 2013 Felipe Herranz
 
 Permission is hereby granted, free of charge, to any
 person obtaining a copy of this software and associated
@@ -31,148 +31,38 @@ import json
 class GeoPlanet(object):
 	""" Main class. A yahoo Id is needed"""
 
-	def __init__(self,yahooId):
+	def __init__(self, yahooId):
 
-		self.__yahooId = str(yahooId)
-		self.__uri = 'where.yahooapis.com'
-		self.__connection = httplib.HTTPConnection(self.__uri)
+		self._yahooId = str(yahooId)
 		self.lang = "en"
 
-	def get_place_by_woeid(self,woeid):
+	def get_place_by_woeid(self, woeid):
 
-		""" Returns a place object specified by WOEID. """
-		params = "/v1/place/" + str(woeid) + "?lang=" + self.__lang +"&format=json&appid=" + self.__yahooId
-		self.__connection.request("GET",params)
-		httpResponse = self.__connection.getresponse()
-
-		try:
-			if httpResponse.status != 200:
-				errorCode = httpResponse.status
-				typeError = "Http Connection failed: " + str(errorCode)
-				raise yahooGeoError(typeError)
-		except yahooGeoError as error:
-			return error
-
-		data = httpResponse.read()
-		data = json.loads(data)
-		placeJson = data["place"]
-		placeObject = Place.parse_place(placeJson)
-		return placeObject
-
-
-	def get_woeid_by_place(self,query):
+		dict_params = {"woeid": str(woeid)}
+		call = Binder.binder(params="/v1/place/", lang="?lang=" + self.lang, yahooId="&format=json&appid=" + self._yahooId)
+		return call(dict_params)
+	
+	def get_woeid_by_place(self, query):
 
 		""" Returns a list of place object specified which match with the query. """
+		dict_params = {"query": query}
+		call = Binder.binder(params_query="/v1/places.q('", lang="?lang=" + self.lang, yahooId="&format=json&appid=" + self._yahooId)
+		return call(dict_params)
+		
 
-		query = urllib.parse.quote(query)
-		params = "/v1/places.q('" + query +"')" + "?lang=" + self.__lang +"&format=json&appid=" + self.__yahooId
-		self.__connection.request("GET",params)
-		httpResponse = self.__connection.getresponse()
-
-		try:
-			if httpResponse.status != 200:
-				errorCode = httpResponse.status
-				typeError = "Http Connection failed: " + str(errorCode)
-				raise yahooGeoError(typeError)
-		except yahooGeoError as error:
-			return error 
-
-		data = httpResponse.read()
-		data = json.loads(data)
-
-		try:  # If there is not a single place object in the Json (you can know it checking "total parameter") raise an exception
-			if data["places"].get("total") == 0:
-				messageError = "This query has not results"
-				raise yahooGeoError(messageError)
-		except yahooGeoError as error:
-			return error
-
-		placeJson = data["places"].get("place")
-		placeList = list()
-
-		for itemPlace in placeJson:
-
-			placeList.append(Place.parse_place(placeJson)) 
-
-		return placeList
-
-	def get_range_of_woeid(self,query,count):
+	def get_range_of_woeid(self, query, count):
 
 		""" Returns a list of place objects of length equals the value of count. Ordered by the most likely. """
-		query = urllib.parse.quote(query)
-		params = "/v1/places.q('" + query + "');start=0;count=" + str(count) + "?lang=" + self.__lang +"&format=json&appid=" + self.__yahooId
-		self.__connection.request("GET",params)
-		httpResponse = self.__connection.getresponse()
+		dict_params = {"query": query, "count": count}
+		call = Binder.binder(params_query="/v1/places.q('", lang="?lang=" + self.lang, yahooId="&format=json&appid=" + self._yahooId)
+		return call(dict_params)
 
-		try:
-			if httpResponse.status != 200:
-				errorCode = httpResponse.status
-				typeError = "Http Connection failed: " + str(errorCode)
-				raise yahooGeoError(typeError)
-		except yahooGeoError as error:
-			return error 
-
-		data = httpResponse.read()
-		data = json.loads(data)
-		
-
-		try:# If there is not a single place object in the Json (you can know it checking "total parameter") raise an exception
-			if data["places"].get("total") == 0:
-				messageError = "This query has not results"
-				raise yahooGeoError(messageError)
-		except yahooGeoError as error:
-			return error
-
-		placeJson = data["places"].get("place")
-		placeList = list()
-
-		
-		for itemPlace in placeJson:
-
-			placeList.append(Place.parse_place(placeJson)) 
-
-		return placeList
-
-	def get_parent_woeid(self,woeid):
+	def get_parent_woeid(self, woeid):
 
 		""" Returns a place object which contains the parent of a given WOEID. """
-
-		params = "/v1/place/" + str(woeid) + "/parent?lang=" +  self.__lang + "&format=json&select=long&appid=" + self.__yahooId
-		self.__connection.request("GET",params)
-		httpResponse = self.__connection.getresponse()
-
-		try:
-			if httpResponse.status != 200:
-				errorCode = httpResponse.status
-				typeError = "Http Connection failed: " + str(errorCode)
-				raise yahooGeoError(typeError)
-		except yahooGeoError as error:
-			return error 
-
-		data = httpResponse.read()
-		data = json.loads(data)
-		placeJson = data["place"]
-		placeObject = Place.parse_place(placeJson)
-		return placeObject
-
-	# def getNeighborsWoeid(self,woeid):
-
-	# 	params = "/v1/place/" + str(woeid) + "/neighbors?lang=" + str(self.__lang) +  "&format=json&appid=" + str(self.__yahooId)
-	# 	params = {"params":params}
-	# 	encodedParams = urllib.urlencode(params)
-	# 	self.__connection.request("GET",encodedParams["params"])
-	# 	httpResponse = self.__connection.getresponse()
-
-	# 	try:
-	# 		if httpResponse.status != 200:
-	# 			errorCode = httpResponse.status
-	# 			typeError = "Http Connection failed: " + str(errorCode)
-	# 			raise yahooGeoError(typeError)
-	# 	except yahooGeoError, error:
-	# 		return error 
-
-	# 	data = httpResponse.read()
-	# 	data = json.loads(data)
+		dict_params = {"woeid": str(woeid)}
+		call = Binder.binder(params="/v1/place/", lang="?lang=" + self.lang, yahooId="&format=json&appid=" + self._yahooId)
+		return call(dict_params)
 
 	
 class Place(object):
@@ -180,11 +70,11 @@ class Place(object):
 	""" A representation of the information given by the JSON. It is practically the same information of the JSON """
 
 	@classmethod
-	def parse_place(cls,placeJson):
+	def parse_place(cls, placeJson):
 		place = cls()
 		place.woeid = placeJson["woeid"]
 		place.placeTypeName = placeJson["placeTypeName"]
-		place.placeTypeName_attr = Attributes(None,placeJson["placeTypeName attrs"].get("code"))
+		place.placeTypeName_attr = Attributes(None, placeJson["placeTypeName attrs"].get("code"))
 		place.name = placeJson["name"]
 		place.country = placeJson["country"]
 		place.country_attrs = Attributes(placeJson["country attrs"].get("type"),placeJson["country attrs"].get("code"))
@@ -194,13 +84,13 @@ class Place(object):
 		place.admin2_attrs = Attributes(placeJson["admin2 attrs"].get("type"),placeJson["admin2 attrs"].get("code"))
 		place.admin3 = placeJson["admin3"]
 		place.locality1 = placeJson["locality1"]
-		place.locality1_attrs = Attributes(placeJson["locality1 attrs"].get("type"),None)
+		place.locality1_attrs = Attributes(placeJson["locality1 attrs"].get("type"), None)
 		place.locality2 = placeJson["locality2"]
 		place.postal = placeJson["postal"]
 		place.centroid = Coordinates("centroid",placeJson["centroid"].get("latitude"),placeJson["centroid"].get("longitude"))
 
-		southwestCoord = Coordinates("southWest",placeJson["boundingBox"].get("southWest").get("latitude"),placeJson["boundingBox"].get("southWest").get("longitude"))
-		northEastCoord = Coordinates("northEast",placeJson["boundingBox"].get("northEast").get("latitude"),placeJson["boundingBox"].get("northEast").get("longitude"))
+		southwestCoord = Coordinates("southWest", placeJson["boundingBox"].get("southWest").get("latitude"), placeJson["boundingBox"].get("southWest").get("longitude"))
+		northEastCoord = Coordinates("northEast", placeJson["boundingBox"].get("northEast").get("latitude"), placeJson["boundingBox"].get("northEast").get("longitude"))
 
 		place.boundingBox = list().append(southwestCoord)
 		place.boundingBox.append(northEastCoord)
@@ -214,7 +104,7 @@ class Attributes(object):
 
 	""" In the yahooGeoPlanet model of data, administrations, countries and localities have some attributes like type and code. This class contains them """
 
-	def __init__(self,Type,code):
+	def __init__(self, Type, code):
 
 		self.type = Type
 		self.code = code
@@ -224,7 +114,7 @@ class Coordinates(object):
 
 	""" A class which contains latitude and longitude """
 
-	def __init__(self,name,latitude,longitude):
+	def __init__(self, name, latitude, longitude):
 
 		self.name = name
 		self.latitude = latitude
@@ -235,9 +125,61 @@ class GeoError(Exception):
 
 	"""  If something went wrong, main methods return a yahooGeoError object with information of the error. """
 
-	def __init__(self,typeError):
+	def __init__(self, typeError):
 
 		self.typeError = typeError
+
+
+class Binder(object):
+
+	_uri = 'where.yahooapis.com'
+
+	@classmethod
+	def binder(**url_config):
+
+		def _geo_call(**kwargs):
+			# Set url parameters
+			params = url_config.get("params",None)
+			params_query = url_config.get("params_query",None)
+			lang = url_config.get("lang")
+			yahooId = url_config.get("yahooId")
+			start = url_config.get("start",None)
+
+			woeid = kwargs.get("woeid", None)
+			query = kwargs.get("query", None)
+			count = kwargs.get("count", None)
+
+			if params is not None:
+				params_str = params + woeid + lang + yahooId
+			elif params_query is not None and start is None:
+				params_str = params_query + urllib.parse.quote(query) + "')" + lang + yahooId
+			else:
+				params_str = params_query + urllib.parse.quote(query) +"');start=0;count=" + count + lang + yahooId
+			
+			# Http connection
+			conn = httplib.HTTPConnection(_uri)
+			conn = conn.request("GET",params_str)
+			http_response = conn.getresponse()
+
+			if http_response.status != 200:
+				error_code = http_response.status
+				type_error = "Http Connection failed: " + str(error_code)
+				raise GeoError(type_error)
+
+			# Parsing
+			list_place = list()
+            data = httpResponse.read()
+		    data = json.loads(data)
+		    if data.get("place", None) is not None:
+		    	list_place.append(Place.parse_place(data["place"]))
+		    else:
+		    	places_json = data["places"]
+		    	places = place_json["place"]
+		    	for item in places:
+		    		list_place.append(Place.parse_place(item))
+		    	return list_place
+
+		return _geo_call
 
 """
 Unicode functions
