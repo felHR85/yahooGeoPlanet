@@ -38,31 +38,27 @@ class GeoPlanet(object):
 
 	def get_place_by_woeid(self, woeid):
 
-		dict_params = {"woeid": str(woeid)}
 		call = Binder.binder(params="/v1/place/", lang="?lang=" + self.lang, yahooId="&format=json&appid=" + self._yahooId)
-		return call(dict_params)
+		return call(woeid=str(woeid))
 	
 	def get_woeid_by_place(self, query):
 
 		""" Returns a list of place object specified which match with the query. """
-		dict_params = {"query": query}
 		call = Binder.binder(params_query="/v1/places.q('", lang="?lang=" + self.lang, yahooId="&format=json&appid=" + self._yahooId)
-		return call(dict_params)
+		return call(query=query)
 		
 
 	def get_range_of_woeid(self, query, count):
 
 		""" Returns a list of place objects of length equals the value of count. Ordered by the most likely. """
-		dict_params = {"query": query, "count": count}
 		call = Binder.binder(params_query="/v1/places.q('", lang="?lang=" + self.lang, yahooId="&format=json&appid=" + self._yahooId)
-		return call(dict_params)
+		return call(query=query, count=str(count))
 
 	def get_parent_woeid(self, woeid):
 
 		""" Returns a place object which contains the parent of a given WOEID. """
-		dict_params = {"woeid": str(woeid)}
 		call = Binder.binder(params="/v1/place/", lang="?lang=" + self.lang, yahooId="&format=json&appid=" + self._yahooId)
-		return call(dict_params)
+		return call(woeid=str(woeid))
 
 	
 class Place(object):
@@ -92,7 +88,8 @@ class Place(object):
 		southwestCoord = Coordinates("southWest", placeJson["boundingBox"].get("southWest").get("latitude"), placeJson["boundingBox"].get("southWest").get("longitude"))
 		northEastCoord = Coordinates("northEast", placeJson["boundingBox"].get("northEast").get("latitude"), placeJson["boundingBox"].get("northEast").get("longitude"))
 
-		place.boundingBox = list().append(southwestCoord)
+		place.boundingBox = list()
+		place.boundingBox.append(southwestCoord)
 		place.boundingBox.append(northEastCoord)
 		place.uri = placeJson["uri"]
 		place.lang = placeJson["lang"]
@@ -135,15 +132,15 @@ class Binder(object):
 	_uri = 'where.yahooapis.com'
 
 	@classmethod
-	def binder(**url_config):
+	def binder(cls,**url_config):
 
 		def _geo_call(**kwargs):
 			# Set url parameters
-			params = url_config.get("params",None)
-			params_query = url_config.get("params_query",None)
+			params = url_config.get("params", None)
+			params_query = url_config.get("params_query", None)
 			lang = url_config.get("lang")
 			yahooId = url_config.get("yahooId")
-			start = url_config.get("start",None)
+			start = url_config.get("start", None)
 
 			woeid = kwargs.get("woeid", None)
 			query = kwargs.get("query", None)
@@ -154,11 +151,11 @@ class Binder(object):
 			elif params_query is not None and start is None:
 				params_str = params_query + urllib.parse.quote(query) + "')" + lang + yahooId
 			else:
-				params_str = params_query + urllib.parse.quote(query) +"');start=0;count=" + count + lang + yahooId
+				params_str = params_query + urllib.parse.quote(query) + "');start=0;count=" + count + lang + yahooId
 			
 			# Http connection
-			conn = httplib.HTTPConnection(_uri)
-			conn = conn.request("GET",params_str)
+			conn = httplib.HTTPConnection(cls._uri)
+			conn.request("GET", params_str)
 			http_response = conn.getresponse()
 
 			if http_response.status != 200:
@@ -168,24 +165,20 @@ class Binder(object):
 
 			# Parsing
 			list_place = list()
-            data = httpResponse.read()
-		    data = json.loads(data)
-		    if data.get("place", None) is not None:
-		    	list_place.append(Place.parse_place(data["place"]))
-		    else:
-		    	places_json = data["places"]
-		    	places = place_json["place"]
-		    	for item in places:
-		    		list_place.append(Place.parse_place(item))
-		    	return list_place
+			data = str(http_response.read(),'utf-8')
+
+			data = json.loads(data)
+			if data.get("place", None) is not None:
+				list_place.append(Place.parse_place(data["place"]))
+			else:
+				places_json = data["places"]
+				places = places_json["place"]
+				for item in places:
+					list_place.append(Place.parse_place(item))
+			return list_place
 
 		return _geo_call
 
-"""
-Unicode functions
-"""
-str_to_utf8 = lambda s: s.encode('utf-8')
-utf8_to_str = lambda s: str(s,'utf-8')
 
 
 
